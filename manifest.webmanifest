@@ -1,0 +1,9 @@
+{
+  "name": "事事洗护配送系统",
+  "short_name": "事事洗护",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f6f3ed",
+  "theme_color": "#176349",
+  "icons": []
+}

@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#176349" />
+    <title>事事洗护配送系统</title>
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./vendor/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <h1>事事洗护配送系统</h1>
+        <p>上传订单、楼栋取件、异常处理、短信电话、统计导出</p>
+      </div>
+      <label class="file-button">
+        导入订单
+        <input id="fileInput" type="file" accept=".xlsx" multiple />
+      </label>
+    </header>
+
+    <main class="shell">
+      <aside class="sidebar">
+        <section class="panel">
+          <h2>当前批次</h2>
+          <select id="batchSelect"></select>
+          <div class="mini-actions">
+            <button id="renameBatchBtn" type="button">重命名</button>
+            <button id="deleteBatchBtn" type="button">删除</button>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>搜索</h2>
+          <input id="searchInput" class="text-input" placeholder="姓名、电话、订单号、楼栋、地址" />
+        </section>
+
+        <section class="panel stats-panel">
+          <h2>进度</h2>
+          <div class="stat-grid">
+            <div><strong id="statTotal">0</strong><span>总单</span></div>
+            <div><strong id="statDone">0</strong><span>已取</span></div>
+            <div><strong id="statTodo">0</strong><span>待取</span></div>
+            <div><strong id="statException">0</strong><span>异常</span></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>导出</h2>
+          <button id="exportAllBtn" type="button">导出完整 Excel</button>
+          <button id="exportExceptionBtn" type="button">导出异常订单</button>
+          <button id="backupBtn" type="button">备份全部数据</button>
+          <label class="restore-button">
+            恢复备份
+            <input id="restoreInput" type="file" accept=".json" />
+          </label>
+        </section>
+      </aside>
+
+      <section class="workspace">
+        <nav class="tabs" aria-label="页面切换">
+          <button class="tab active" data-tab="pickup" type="button">取件任务</button>
+          <button class="tab" data-tab="exceptions" type="button">异常中心</button>
+          <button class="tab" data-tab="return" type="button">送回清单</button>
+          <button class="tab" data-tab="stats" type="button">统计</button>
+        </nav>
+
+        <section id="emptyState" class="empty-state">
+          <h2>先导入订单 Excel</h2>
+          <p>支持多张订单表合并，系统会按订单号去重，并把数据保存在当前浏览器里。</p>
+        </section>
+
+        <section id="pickupView" class="view"></section>
+        <section id="exceptionsView" class="view hidden"></section>
+        <section id="returnView" class="view hidden"></section>
+        <section id="statsView" class="view hidden"></section>
+      </section>
+    </main>
+
+    <template id="orderCardTemplate">
+      <article class="order-card">
+        <div class="order-head">
+          <div>
+            <h3 class="order-title"></h3>
+            <p class="order-subtitle"></p>
+          </div>
+          <span class="status-badge"></span>
+        </div>
+        <p class="order-line order-address"></p>
+        <p class="order-line order-product"></p>
+        <p class="order-line order-no"></p>
+        <p class="order-warning"></p>
+        <div class="quick-actions"></div>
+        <div class="image-preview-panel hidden"></div>
+        <div class="status-actions"></div>
+        <div class="note-actions"></div>
+        <textarea class="note-input" rows="2" placeholder="异常备注"></textarea>
+      </article>
+    </template>
+
+    <div id="imageModal" class="image-modal hidden" role="dialog" aria-modal="true">
+      <button id="imageModalClose" class="image-modal-close" type="button">关闭</button>
+      <img id="imageModalImg" alt="订单图片大图" />
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
