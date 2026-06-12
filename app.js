@@ -3,6 +3,10 @@ const BRAND_NAME = "事事洗护";
 const SCHOOL_NAMES = [
   "师大",
   "财大",
+  "民大",
+  "贵中医",
+  "贵科院",
+  "人文",
   "农大",
   "医大",
   "工大",
@@ -45,6 +49,27 @@ const NOTE_SHORTCUTS = ["电话无人接", "地址不清", "不在宿舍", "客�
 const STATUS_LIST = ["待取件", "已取到", "未找到", "异常"];
 const DORM_CATALOG = buildDormCatalog();
 const WASH_MERCHANT_KEYWORDS = ["洗护"];
+const WASH_PRODUCT_KEYWORDS = ["鞋", "鞋子", "衣服", "衣物", "精洗", "洗鞋", "洗护", "羽绒服", "大衣", "网面鞋", "帆布鞋", "运动鞋", "休闲鞋", "板鞋"];
+const AFTER_SALES_PHONE = "18185087364";
+const LABEL_CAMPUS_ORDER = [
+  "师大东区",
+  "师大西区",
+  "师大龙文苑",
+  "城市学院",
+  "职业学院",
+  "民大南区",
+  "民大北区",
+  "理工一期",
+  "理工三期",
+  "贵中医桂园",
+  "贵中医李园",
+  "贵中医杏园",
+  "贵中医桃园",
+  "财大西区",
+  "财大东区",
+  "贵科院学生公寓",
+  "人文学生宿舍"
+];
 
 let state = loadState();
 let activeTab = "pickup";
@@ -81,9 +106,30 @@ function normalizePhone(value) {
   return /^\d+\.0$/.test(text) ? text.slice(0, -2) : text;
 }
 
+function getFirstValue(row, columns) {
+  for (const column of columns) {
+    const value = normalizeText(row[column]);
+    if (value) return value;
+  }
+  return "";
+}
+
 function compactText(value) {
   return normalizeText(value)
     .toUpperCase()
+    .replace(/_X000D_/g, "")
+    .replace(/贵州师范大学/g, "师大")
+    .replace(/贵州财经大学/g, "财大")
+    .replace(/贵州民族大学/g, "民大")
+    .replace(/贵州理工学院/g, "理工")
+    .replace(/贵州中医药大学/g, "贵中医")
+    .replace(/贵州科学院/g, "贵科院")
+    .replace(/贵州民族大学北校区/g, "民大北区")
+    .replace(/贵州民族大学南校区/g, "民大南区")
+    .replace(/东校区/g, "东区")
+    .replace(/西校区/g, "西区")
+    .replace(/南校区/g, "南区")
+    .replace(/北校区/g, "北区")
     .replace(/[零〇]/g, "0")
     .replace(/[一壹]/g, "1")
     .replace(/[二贰两]/g, "2")
@@ -125,12 +171,15 @@ function buildDormCatalog() {
   add("贵中医", "宿舍区", "竹园");
   ["A", "B", "C", "D"].forEach((area) => add("贵中医", "宿舍区", `桃园${area}区`));
   add("贵中医", "宿舍区", "H8号学生公寓");
+  add("贵中医", "宿舍区", "H7学生公寓");
+  add("贵中医", "宿舍区", "J3学生公寓");
   add("贵中医", "宿舍区", "J5学生公寓");
 
   addRange("理工", "学生公寓一期", 1, 5, "学生公寓一期");
   ["H01-2", "H02-1", "H02-2", "H02-3", "H02-4"].forEach((building) => {
     add("理工", "学生公寓三期", `学生公寓三期${building}`);
   });
+  add("理工", "学生公寓三期", "善德居");
 
   addRange("贵科院", "学生公寓", 1, 13, "学生公寓");
   add("贵科院", "学生公寓", "学生公寓14栋（留学生公寓）");
@@ -214,7 +263,10 @@ function buildingAliases(entry) {
   if (building === "竹园") aliases.push("竹园");
   if (/^桃园[A-D]区$/.test(building)) aliases.push(building.replace("区", ""));
   if (building.includes("H8")) aliases.push("H8", "H8学生公寓", "桂园H8", "桂园4即H8");
+  if (building.includes("H7")) aliases.push("H7", "H7学生公寓", "花溪H7", "H7宿舍");
+  if (building.includes("J3")) aliases.push("J3", "J3学生公寓", "花溪J3", "J3宿舍");
   if (building.includes("J5")) aliases.push("J5", "J5学生公寓");
+  if (building === "善德居") aliases.push("三期善德居", "学生公寓三期善德居", "理工三期善德居", "贵安校区三期善德居");
   if (building.includes("留学生公寓")) aliases.push("14栋留学生公寓", "14栋", "留学生公寓");
   if (school === "人文") aliases.push(building.replace("学生宿舍", ""), `人文院${building.replace("学生宿舍", "")}`);
 
@@ -306,14 +358,25 @@ function extractCampus(formInfo, address, dormInfo = extractDormInfo(formInfo, a
   return "";
 }
 
+function normalizeSchoolName(value) {
+  const text = normalizeText(value);
+  if (/贵州师范大学|师大/.test(text)) return "师大";
+  if (/贵州财经大学|财大/.test(text)) return "财大";
+  if (/贵州民族大学|民大/.test(text)) return "民大";
+  if (/贵州理工学院|理工/.test(text)) return "理工";
+  if (/贵州中医药大学|贵中医/.test(text)) return "贵中医";
+  if (/贵州科学院|贵科院/.test(text)) return "贵科院";
+  return text;
+}
+
 function extractSchool(campus, formInfo, address, dormInfo = extractDormInfo(formInfo, address)) {
-  if (dormInfo.school) return dormInfo.school;
+  if (dormInfo.school) return normalizeSchoolName(dormInfo.school);
 
   const text = `${normalizeText(campus)} ${normalizeText(formInfo)} ${normalizeText(address)}`;
   const knownSchool = SCHOOL_NAMES.find((school) => text.includes(school));
-  if (knownSchool) return knownSchool;
+  if (knownSchool) return normalizeSchoolName(knownSchool);
   const formalSchoolMatch = text.match(/([^省市区县路号\s]{2,16}(?:大学|学院|学校))/);
-  if (formalSchoolMatch) return formalSchoolMatch[1];
+  if (formalSchoolMatch) return normalizeSchoolName(formalSchoolMatch[1]);
   if (text.includes("财大")) return "财大";
   if (text.includes("师大")) return "师大";
   return "";
@@ -350,7 +413,10 @@ function validateRows(rows) {
 
 function isWashMerchant(row) {
   const merchant = normalizeText(row["所属商家"]);
-  return WASH_MERCHANT_KEYWORDS.some((keyword) => merchant.includes(keyword));
+  if (WASH_MERCHANT_KEYWORDS.some((keyword) => merchant.includes(keyword))) return true;
+
+  const productText = `${normalizeText(row["商品名称"])} ${normalizeText(row["规格"])}`;
+  return merchant === "自营" && WASH_PRODUCT_KEYWORDS.some((keyword) => productText.includes(keyword));
 }
 
 function orderState(orderNo) {
@@ -455,10 +521,134 @@ function buildStats(pickupList) {
   });
 }
 
+function itemCount(row) {
+  const specMatch = normalizeText(row["规格"]).match(/(\d+)\s*(?:双|件|个|条|套|份)/);
+  if (specMatch) return Math.max(1, Number(specMatch[1]));
+
+  const productMatch = normalizeText(row["商品名称"]).match(/(\d+)\s*(?:双|件|个|条|套|份)/);
+  if (productMatch) return Math.max(1, Number(productMatch[1]));
+
+  const quantity = Number(normalizeText(row["数量"]));
+  return Number.isFinite(quantity) && quantity > 0 ? Math.floor(quantity) : 1;
+}
+
+function formatBarcodeDate(row, pickupRow) {
+  const candidates = [
+    parseDate(pickupRow.取件日期),
+    parseDate(row["付款时间"]),
+    parseDate(row["下单时间"]),
+    new Date()
+  ];
+  const date = candidates.find((item) => item && !Number.isNaN(item.getTime()));
+  return `${String(date.getFullYear()).slice(-2)}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function formatLabelCampus(pickupRow) {
+  const school = normalizeText(pickupRow.学校);
+  const campus = normalizeText(pickupRow.校区);
+  const building = normalizeText(pickupRow.楼栋);
+  if (campus.includes("职业学院") || school.includes("职业学院")) return "城市学院";
+  if (school === "理工" && campus.includes("一期")) return `理工一期:${building.replace(/^学生公寓一期/, "")}`;
+  if (school === "理工" && campus.includes("三期")) return `理工三期:${building.replace(/^学生公寓三期/, "")}`;
+  if (school === "贵中医") {
+    const gardenMatch = building.match(/^(.+?园)(\d+栋)$/);
+    if (gardenMatch) return `贵中医${gardenMatch[1]}:${gardenMatch[2]}`;
+    const peachMatch = building.match(/^(桃园[A-D])区$/);
+    if (peachMatch) return `贵中医桃园:${peachMatch[1].replace("桃园", "")}区`;
+    return building ? `贵中医:${building}` : "贵中医";
+  }
+  const left = campus.startsWith(school) ? campus : `${school}${campus}`;
+  if (left && building) return `${left}:${building}`;
+  return left || building;
+}
+
+function formatLabelItem(row) {
+  const quantity = normalizeText(row["数量"]);
+  const product = normalizeText(row["商品名称"]);
+  const spec = normalizeText(row["规格"]);
+  if (spec) return spec;
+  const merged = [product, spec].filter(Boolean).join(" ");
+  if (quantity && product) return `${quantity}${product}`;
+  return merged || quantity;
+}
+
+function campusSortValue(campus) {
+  const text = normalizeText(campus);
+  const index = LABEL_CAMPUS_ORDER.findIndex((item) => text.includes(item));
+  return index === -1 ? LABEL_CAMPUS_ORDER.length : index;
+}
+
+function washLabelSortCampus(item) {
+  return formatLabelCampus(item.pickupRow);
+}
+
+function compareWashLabelSource(a, b) {
+  const campusA = washLabelSortCampus(a);
+  const campusB = washLabelSortCampus(b);
+  const checks = [
+    campusSortValue(campusA) - campusSortValue(campusB),
+    normalizeText(campusA).localeCompare(normalizeText(campusB), "zh-CN"),
+    buildingNumber(a.pickupRow.楼栋) - buildingNumber(b.pickupRow.楼栋),
+    normalizeText(a.pickupRow.楼栋).localeCompare(normalizeText(b.pickupRow.楼栋), "zh-CN"),
+    Number(parseDate(a.rawRow["下单时间"]) || 0) - Number(parseDate(b.rawRow["下单时间"]) || 0),
+    normalizeText(a.rawRow["姓名"]).localeCompare(normalizeText(b.rawRow["姓名"]), "zh-CN"),
+    a.sourceIndex - b.sourceIndex
+  ];
+  return checks.find((value) => value !== 0) || 0;
+}
+
+function buildWashLabelList(batch) {
+  if (!batch) return [];
+  validateRows(batch.rows);
+
+  const pickupByOrderNo = new Map(buildPickupList(batch).map((row) => [row.订单号, row]));
+  const rows = batch.rows
+    .map((row, sourceIndex) => ({
+      rawRow: row,
+      pickupRow: pickupByOrderNo.get(normalizeText(row["订单号"])),
+      sourceIndex
+    }))
+    .filter((item) => item.pickupRow)
+    .sort(compareWashLabelSource);
+  const list = [];
+
+  for (const item of rows) {
+    const row = item.rawRow;
+    const pickupRow = item.pickupRow;
+    const splitCount = itemCount(row);
+    for (let index = 0; index < splitCount; index += 1) {
+      list.push({
+        序号: list.length + 1,
+        条形编码: "",
+        所属商家: normalizeText(row["所属商家"]),
+        姓名: normalizeText(row["姓名"]),
+        电话: normalizePhone(row["电话"]),
+        校区: formatLabelCampus(pickupRow),
+        物品: formatLabelItem(row),
+        实付款: getFirstValue(row, ["实付款", "实付金额", "付款金额", "支付金额", "订单实付", "订单金额"]),
+        下单时间: normalizeText(row["下单时间"]),
+        售后电话: getFirstValue(row, ["售后电话", "客服电话"]) || AFTER_SALES_PHONE,
+        _barcodeDate: formatBarcodeDate(row, pickupRow)
+      });
+    }
+  }
+
+  const counters = {};
+  return list.map((row, index) => {
+    const { _barcodeDate, ...visibleRow } = row;
+    counters[_barcodeDate] = (counters[_barcodeDate] || 0) + 1;
+    return {
+      ...visibleRow,
+      序号: index + 1,
+      条形编码: `${_barcodeDate}${String(counters[_barcodeDate]).padStart(3, "0")}`
+    };
+  });
+}
+
 function matchesSearch(row) {
   const query = normalizeText(searchInput.value).toLowerCase();
   if (!query) return true;
-  return [row.订单号, row.姓名, row.电话, row.学校, row.校区, row.楼栋, row.地址, row.商品名称, row.规格, row.取件状态, row.异常备注]
+  return [row.订单号, row.条形编码, row.姓名, row.电话, row.学校, row.校区, row.楼栋, row.地址, row.商品名称, row.规格, row.物品, row.所属商家, row.取件状态, row.异常备注]
     .map((value) => normalizeText(value).toLowerCase())
     .some((value) => value.includes(query));
 }
@@ -723,6 +913,7 @@ function render() {
   $("#pickupView").classList.toggle("hidden", !hasBatch || activeTab !== "pickup");
   $("#exceptionsView").classList.toggle("hidden", !hasBatch || activeTab !== "exceptions");
   $("#returnView").classList.toggle("hidden", !hasBatch || activeTab !== "return");
+  $("#labelView").classList.toggle("hidden", !hasBatch || activeTab !== "label");
   $("#statsView").classList.toggle("hidden", !hasBatch || activeTab !== "stats");
 
   if (!batch) {
@@ -740,12 +931,14 @@ function render() {
   const filteredPickup = pickupList.filter(matchesSearch);
   const exceptionList = buildExceptionList(pickupList).filter(matchesSearch);
   const returnList = buildReturnList(pickupList).filter(matchesSearch);
+  const labelList = buildWashLabelList(batch).filter(matchesSearch);
   const stats = buildStats(pickupList).filter(matchesSearch);
 
   renderStatsNumbers(pickupList, buildExceptionList(pickupList));
   if (activeTab === "pickup") renderPickupView(filteredPickup);
   if (activeTab === "exceptions") renderExceptionsView(exceptionList);
   if (activeTab === "return") renderTable($("#returnView"), returnList, ["送回顺序", "送回日期", "学校", "校区", "楼栋", "姓名", "电话", "商品名称", "规格", "数量", "地址", "订单号", "送回状态", "异常备注"]);
+  if (activeTab === "label") renderTable($("#labelView"), labelList, ["序号", "条形编码", "所属商家", "姓名", "电话", "校区", "物品", "实付款", "下单时间", "售后电话"]);
   if (activeTab === "stats") renderTable($("#statsView"), stats, ["取件日期", "学校", "校区", "楼栋", "取件数量"]);
 }
 
@@ -756,15 +949,27 @@ async function readWorkbook(file) {
   return XLSX.utils.sheet_to_json(sheet, { defval: "" });
 }
 
+function importDedupKey(row) {
+  const orderNo = normalizeText(row["订单号"]);
+  if (!orderNo) return "";
+  return [
+    orderNo,
+    normalizeText(row["商品名称"]),
+    normalizeText(row["规格"]),
+    normalizeText(row["实付款"]),
+    normalizeText(row["下单时间"])
+  ].join("||");
+}
+
 async function importFiles(files) {
   const groups = [];
   for (const file of files) groups.push(await readWorkbook(file));
   const rows = [];
   const seen = new Set();
   for (const row of groups.flat()) {
-    const orderNo = normalizeText(row["订单号"]);
-    if (orderNo && seen.has(orderNo)) continue;
-    if (orderNo) seen.add(orderNo);
+    const dedupKey = importDedupKey(row);
+    if (dedupKey && seen.has(dedupKey)) continue;
+    if (dedupKey) seen.add(dedupKey);
     rows.push(row);
   }
   validateRows(rows);
@@ -789,6 +994,7 @@ function activeLists() {
   return {
     pickupList,
     returnList: buildReturnList(pickupList),
+    labelList: buildWashLabelList(getActiveBatch()),
     exceptionList: buildExceptionList(pickupList),
     stats: buildStats(pickupList)
   };
@@ -846,7 +1052,13 @@ $("#exportAllBtn").addEventListener("click", () => {
   const batch = getActiveBatch();
   if (!batch) return alert("请先导入订单。");
   const lists = activeLists();
-  exportExcel({ 取件清单: lists.pickupList, 送回清单: lists.returnList, 异常订单: lists.exceptionList, 数量统计: lists.stats }, "事事洗护配送清单.xlsx");
+  exportExcel({ 取件清单: lists.pickupList, 送回清单: lists.returnList, 水洗标清单: lists.labelList, 异常订单: lists.exceptionList, 数量统计: lists.stats }, "事事洗护配送清单.xlsx");
+});
+
+$("#exportWashLabelBtn").addEventListener("click", () => {
+  const batch = getActiveBatch();
+  if (!batch) return alert("请先导入订单。");
+  exportExcel({ 水洗标清单: activeLists().labelList }, "事事洗护水洗标清单.xlsx");
 });
 
 $("#exportExceptionBtn").addEventListener("click", () => {

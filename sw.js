@@ -1,4 +1,4 @@
-const CACHE_NAME = "shishi-delivery-web-v1";
+const CACHE_NAME = "shishi-delivery-web-v6";
 const ASSETS = [
   "./",
   "./index.html",

@@ -50,6 +50,7 @@
         <section class="panel">
           <h2>导出</h2>
           <button id="exportAllBtn" type="button">导出完整 Excel</button>
+          <button id="exportWashLabelBtn" type="button">导出水洗标清单</button>
           <button id="exportExceptionBtn" type="button">导出异常订单</button>
           <button id="backupBtn" type="button">备份全部数据</button>
           <label class="restore-button">
@@ -64,6 +65,7 @@
           <button class="tab active" data-tab="pickup" type="button">取件任务</button>
           <button class="tab" data-tab="exceptions" type="button">异常中心</button>
           <button class="tab" data-tab="return" type="button">送回清单</button>
+          <button class="tab" data-tab="label" type="button">水洗标清单</button>
           <button class="tab" data-tab="stats" type="button">统计</button>
         </nav>
 
@@ -75,6 +77,7 @@
         <section id="pickupView" class="view"></section>
         <section id="exceptionsView" class="view hidden"></section>
         <section id="returnView" class="view hidden"></section>
+        <section id="labelView" class="view hidden"></section>
         <section id="statsView" class="view hidden"></section>
       </section>
     </main>
